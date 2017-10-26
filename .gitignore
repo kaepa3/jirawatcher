@@ -1,0 +1,36 @@
+gibo 1.0.5 by Simon Whitaker <sw@netcetera.org>
+https://github.com/simonwhitaker/gitignore-boilerplates
+
+Fetches gitignore boilerplates from github.com/github/gitignore
+
+Usage:
+    gibo [options]
+    gibo [boilerplate boilerplate...]
+
+Example:
+    gibo Python TextMate >> .gitignore
+
+Options:
+    -l, --list          List available boilerplates
+    -u, --upgrade       Upgrade list of available boilerplates
+    -h, --help          Display this help text
+    -v, --version       Display current script version
+### go
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+
+
+*.toml
