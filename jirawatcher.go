@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/kaepa3/jirawatcher/sample"
+
 	"github.com/BurntSushi/toml"
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
@@ -37,10 +39,41 @@ func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "text/html: charset=utf-8")
 	vals, err := getIssues()
 	if err == nil {
-		mainTmpl.Execute(w, assortIssues(vals))
+		counter := sample.GetCounter()
+		if counter != nil {
+			var vm ViewModel
+			vm.Records = assortIssues(vals)
+			vm.Url = config.JiraURL
+			vm.GraphHeader, vm.GraphValue = createTemplateText(counter)
+			mainTmpl.Execute(w, vm)
+		}
 	} else {
 		fmt.Fprintf(w, err.Error())
 	}
+}
+func createTemplateText(counter []sample.Record) ([]string, [][]int) {
+
+	header := make([]string, 0, 10)
+	for _, v := range counter {
+		header = append(header, v.Name)
+	}
+
+	total := make([][]int, 0, 10)
+	for i := range counter[0].Counter {
+		data := make([]int, 0, 10)
+		for _, v := range counter {
+			data = append(data, v.Counter[i])
+		}
+		total = append(total, data)
+	}
+	return header, total
+}
+
+type ViewModel struct {
+	Records     map[string][]Result
+	GraphHeader []string
+	GraphValue  [][]int
+	Url         string
 }
 
 type Result struct {

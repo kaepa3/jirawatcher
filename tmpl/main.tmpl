@@ -1,10 +1,33 @@
 <html>
 <head>
 	<title>タスク状況</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+            ['date' {{range $i, $v := .GraphHeader}},'{{$v}}'{{end}}],
+            {{range $i, $v := .GraphValue}}
+            ['{{$i}}'{{range $o, $data := $v}},{{$data}}{{end}} ],{{end}}
+        ]);
+
+        var options = {
+          title: 'Company Performance',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
     <script type="text/javascript">
         function ChangeTab(tabname) {
         // タブメニュー実装
-        {{range $i, $v := .}}
+        {{range $i, $v := .Records}}
         document.getElementById('{{$i}}').style.display = 'none';
         {{end}}
         // タブメニュー実装
@@ -36,11 +59,11 @@
 <body>
     <div class="tabbox">
         <p class="tabs">
-            {{range $i, $v := .}}
+            {{range $i, $v := .Records}}
             <a href="#{{$i}}" class="{{$i}}" onclick="ChangeTab('{{$i}}'); return false;">{{$i}}</a>
             {{end}}
         </p>
-        {{range $i, $v := .}}
+        {{range $i, $v := .Records}}
         <div id="{{$i}}" class="tab">
             <table>
                 <tr>
@@ -53,7 +76,7 @@
                 {{range $v}}
                 <tr>
                     <td>{{.Title}}</td>
-                    <td>{{.Key}}</td>
+                    <td><a href="{{$.Url}}browse/{{.Key}}" target="_blank">{{.Key}}</a></td>
                     <td>{{.Project}}</td>
                     <td>{{.Assignee}}</td>
                     <td>{{.Status}}</td>
@@ -63,6 +86,7 @@
         </div>
         {{end}}
     </div>
+    <div id="curve_chart" style="width: 900px; height: 500px"></div>
     <script type="text/javascript">
     ChangeTab('endo');
     </script>
