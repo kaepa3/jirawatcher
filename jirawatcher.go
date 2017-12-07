@@ -1,22 +1,32 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 
 	"github.com/kaepa3/jirawatcher/sample"
+	"github.com/kaepa3/jirawatcher/userauth"
+	"github.com/kaepa3/oauth/lib"
 
 	"github.com/BurntSushi/toml"
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
+	v2 "google.golang.org/api/oauth2/v2"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
-var config Config
+func initialize() {
+	toml.DecodeFile("./jiraConfig.toml", &config)
+	auth = userauth.NewUserAuth("userauth.toml")
+}
 
-type Config struct {
+var config JiraConfig
+var auth *userauth.UserAuth
+
+type JiraConfig struct {
 	JiraURL string
 	User    string
 	Pass    string
@@ -25,17 +35,47 @@ type Config struct {
 
 func main() {
 	initialize()
-	goji.Get("/", watchPage)
+	goji.Get("/", indexPage)
+	goji.Get("/callback", watchPage)
 	goji.Serve()
 }
 
-func initialize() {
-	toml.DecodeFile("./config.toml", &config)
+func indexPage(c web.C, w http.ResponseWriter, r *http.Request) {
+	oauthConfig := google.GetConnect()
+	url := oauthConfig.AuthCodeURL("")
+	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
+	tokenInfo := createToken(r)
+	buf, _ := tokenInfo.MarshalJSON()
+	if auth.Authentication(tokenInfo) {
+		displayInfomation(c, w, r)
+	} else {
+		fmt.Fprintf(w, string(buf))
+	}
+}
+func createToken(r *http.Request) *v2.Tokeninfo {
+	oauthConfig := google.GetConnect()
+
+	context := context.Background()
+
+	token, err := oauthConfig.Exchange(context, createCode(r))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if token.Valid() == false {
+		log.Fatal("vaild token")
+	}
+	service, _ := v2.New(oauthConfig.Client(context, token))
+	tokenInfo, _ := service.Tokeninfo().AccessToken(token.AccessToken).Context(context).Do()
+	return tokenInfo
 }
 
 var mainTmpl *template.Template = template.Must(template.ParseFiles("tmpl/main.tmpl"))
 
-func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
+func displayInfomation(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "text/html: charset=utf-8")
 	vals, err := getIssues()
 	if err == nil {
@@ -114,4 +154,15 @@ func getIssues() ([]jira.Issue, error) {
 		return issues, nil
 	}
 	return nil, err
+}
+
+func createCode(r *http.Request) string {
+	for key, values := range r.URL.Query() {
+		if key == "code" {
+			for _, v := range values {
+				return v
+			}
+		}
+	}
+	return ""
 }
