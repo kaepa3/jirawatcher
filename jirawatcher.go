@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
+        "flag"
+	"os"
 
 	"github.com/kaepa3/jirawatcher/sample"
 	"github.com/kaepa3/jirawatcher/userauth"
@@ -13,14 +14,38 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/zenazn/goji"
-	"github.com/zenazn/goji/web"
+	log "github.com/cihub/seelog"
+        "github.com/zenazn/goji/web"
 	v2 "google.golang.org/api/oauth2/v2"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
 func initialize() {
+	initLogger()
+        flag.Set("bind", ":50000")
 	toml.DecodeFile("./jiraConfig.toml", &config)
 	auth = userauth.NewUserAuth("userauth.toml")
+}
+
+
+func initLogger() {
+	logConfig := `
+	<seelog type="adaptive" mininterval="200000000" maxinterval="1000000000" critmsgcount="5">
+		<formats>
+		    <format id="main" format="Time:%Date(2006/01/02) %Time	file:%File	func:%FuncShort	line:%Line	level:%LEV	msg:%Msg%n" />
+		    <format id="con" format="%Msg%n" />
+		</formats>
+		<outputs formatid="main">
+			<rollingfile filename="rev.log" type="size" maxsize="102400" maxrolls="1" formatid = "main"/>
+			<console formatid = "con"/>
+		</outputs>
+	</seelog>`
+	logger, err := log.LoggerFromConfigAsBytes([]byte(logConfig))
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	log.ReplaceLogger(logger)
 }
 
 var config JiraConfig
@@ -62,11 +87,11 @@ func createToken(r *http.Request) *v2.Tokeninfo {
 
 	token, err := oauthConfig.Exchange(context, createCode(r))
 	if err != nil {
-		log.Fatal(err)
+		log.Info(err)
 	}
 
 	if token.Valid() == false {
-		log.Fatal("vaild token")
+		log.Info("vaild token")
 	}
 	service, _ := v2.New(oauthConfig.Client(context, token))
 	tokenInfo, _ := service.Tokeninfo().AccessToken(token.AccessToken).Context(context).Do()
@@ -150,7 +175,7 @@ func getIssues() ([]jira.Issue, error) {
 	opt := &jira.SearchOptions{MaxResults: 1000}
 	issues, _, err := jiraClient.Issue.Search(config.Jql, opt)
 	if err == nil {
-		log.Println("cnt:", len(issues))
+		log.Info("cnt:", len(issues))
 		return issues, nil
 	}
 	return nil, err

@@ -14,7 +14,7 @@ type UserAuth struct {
 func NewUserAuth(path string) *UserAuth {
 	var config UserAuth
 	toml.DecodeFile(path, &config)
-	fmt.Println(config)
+	
 	return &config
 }
 
