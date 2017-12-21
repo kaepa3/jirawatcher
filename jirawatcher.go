@@ -73,11 +73,15 @@ func indexPage(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
 	tokenInfo := createToken(r)
-	buf, _ := tokenInfo.MarshalJSON()
-	if auth.Authentication(tokenInfo) {
-		displayInfomation(c, w, r)
-	} else {
-		fmt.Fprintf(w, string(buf))
+	if tokenInfo != nil{
+		buf, err := tokenInfo.MarshalJSON()
+		if err != nil{
+			if auth.Authentication(tokenInfo) {
+				displayInfomation(c, w, r)
+			} else {
+				fmt.Fprintf(w, string(buf))
+			}
+		}
 	}
 }
 func createToken(r *http.Request) *v2.Tokeninfo {
@@ -88,6 +92,7 @@ func createToken(r *http.Request) *v2.Tokeninfo {
 	token, err := oauthConfig.Exchange(context, createCode(r))
 	if err != nil {
 		log.Info(err)
+		return nil
 	}
 
 	if token.Valid() == false {

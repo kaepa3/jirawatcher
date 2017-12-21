@@ -1,7 +1,6 @@
 package userauth
 
 import (
-	"fmt"
 
 	"github.com/BurntSushi/toml"
 	oauth2 "google.golang.org/api/oauth2/v2"
