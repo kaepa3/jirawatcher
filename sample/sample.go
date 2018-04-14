@@ -56,11 +56,8 @@ func assortIssues(vals []jira.Issue) map[string][]int {
 	}
 	return ret
 }
-func createDayIndex(date string) int {
-	t, e := time.Parse("2006-01-02T15:04:05.000+0000", date)
-	if e != nil {
-		return 0
-	}
+func createDayIndex(date jira.Time) int {
+	t := time.Time(date)
 	duration := int((time.Now().Sub(t)).Hours())
 	if duration > 24 {
 		result := (int(duration) / 24) / 7
