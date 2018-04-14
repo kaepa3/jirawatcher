@@ -106,9 +106,9 @@ var mainTmpl *template.Template = template.Must(template.ParseFiles("tmpl/main.t
 
 func displayInfomation(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "text/html: charset=utf-8")
-	vals, err := getIssues(config.JiraURL, config.User, config.Pass)
+	vals, err := getIssues()
 	if err == nil {
-		counter := sample.GetCounter()
+		counter := sample.GetCounter(config.JiraURL, config.User, config.Pass)
 		if counter != nil {
 			var vm ViewModel
 			vm.Records = assortIssues(vals)
