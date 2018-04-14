@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"html/template"
 	"net/http"
-        "flag"
 	"os"
 
 	"github.com/kaepa3/jirawatcher/sample"
@@ -13,20 +13,19 @@ import (
 	"github.com/kaepa3/oauth/lib"
 
 	"github.com/BurntSushi/toml"
-	"github.com/zenazn/goji"
 	log "github.com/cihub/seelog"
-        "github.com/zenazn/goji/web"
+	"github.com/zenazn/goji"
+	"github.com/zenazn/goji/web"
 	v2 "google.golang.org/api/oauth2/v2"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
 func initialize() {
 	initLogger()
-        flag.Set("bind", ":50000")
+	flag.Set("bind", ":50000")
 	toml.DecodeFile("./jiraConfig.toml", &config)
 	auth = userauth.NewUserAuth("userauth.toml")
 }
-
 
 func initLogger() {
 	logConfig := `
@@ -73,9 +72,9 @@ func indexPage(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
 	tokenInfo := createToken(r)
-	if tokenInfo != nil{
+	if tokenInfo != nil {
 		buf, err := tokenInfo.MarshalJSON()
-		if err != nil{
+		if err != nil {
 			if auth.Authentication(tokenInfo) {
 				displayInfomation(c, w, r)
 			} else {
@@ -107,7 +106,7 @@ var mainTmpl *template.Template = template.Must(template.ParseFiles("tmpl/main.t
 
 func displayInfomation(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "text/html: charset=utf-8")
-	vals, err := getIssues()
+	vals, err := getIssues(config.JiraURL, config.User, config.Pass)
 	if err == nil {
 		counter := sample.GetCounter()
 		if counter != nil {

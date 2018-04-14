@@ -12,8 +12,8 @@ const (
 	Span = 6
 )
 
-func GetCounter() []Record {
-	issues, e := getRecords()
+func GetCounter(url, user, pass string) []Record {
+	issues, e := getRecords(url, user, pass)
 	if e != nil {
 		return nil
 	}
@@ -74,10 +74,10 @@ func createName(user *jira.User) string {
 	}
 	return "empty"
 }
-func getRecords() ([]jira.Issue, error) {
+func getRecords(url, user, pass string) ([]jira.Issue, error) {
 	//	Jiraとの接続
-	jiraClient, _ := jira.NewClient(nil, "http://ec2-34-211-174-71.us-west-2.compute.amazonaws.com/jira/")
-	jiraClient.Authentication.SetBasicAuth("support_asmil", "rzXPJb6V")
+	jiraClient, _ := jira.NewClient(nil, url)
+	jiraClient.Authentication.SetBasicAuth(user, pass)
 
 	//　課題の取得
 	opt := &jira.SearchOptions{MaxResults: 1000}
