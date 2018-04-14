@@ -73,17 +73,13 @@ func indexPage(c web.C, w http.ResponseWriter, r *http.Request) {
 func watchPage(c web.C, w http.ResponseWriter, r *http.Request) {
 	tokenInfo := createToken(r)
 	if tokenInfo != nil {
-		buf, _:= tokenInfo.MarshalJSON()
-	
-			if auth.Authentication(tokenInfo) {
-				displayInfomation(c, w, r)
-			} else {
-				fmt.Fprintf(w, string(buf))
-			}
-		 
-
-		
-	} else{
+		buf, _ := tokenInfo.MarshalJSON()
+		if auth.Authentication(tokenInfo) {
+			displayInfomation(c, w, r)
+		} else {
+			fmt.Fprintf(w, string(buf))
+		}
+	} else {
 		log.Info("token error")
 	}
 }
@@ -119,7 +115,7 @@ func displayInfomation(c web.C, w http.ResponseWriter, r *http.Request) {
 			vm.Url = config.JiraURL
 			vm.GraphHeader, vm.GraphValue = createTemplateText(counter)
 			mainTmpl.Execute(w, vm)
-		} else{
+		} else {
 			log.Info("count err")
 		}
 	} else {
